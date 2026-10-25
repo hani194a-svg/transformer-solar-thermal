@@ -1,5 +1,7 @@
 # Sun-Aware Transformer Thermal Calculator
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23641864.svg)](https://doi.org/10.5281/zenodo.23641864)
+
 A browser-based research tool that estimates the hot-spot temperature and insulation ageing of oil-immersed transformers in hot, sunny climates. It compares the standard IEEE C57.91 Clause 7 thermal model, which uses only ambient temperature and load, with an extended model that adds absorbed solar heat and wind cooling. A field-comparison module calibrates the extended model against measured top-oil temperatures.
 
 **Status:** research prototype, version 0.2. Results are estimates and have not yet been validated against field measurements.
