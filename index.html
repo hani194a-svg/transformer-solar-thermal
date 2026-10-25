@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>المحول تحت الشمس</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap">
+</head>
+<body>
+<style>
+/* Layout: explainer band, then a two-column workbench — inputs on one side, verdict + 24h chart on the other; method notes below */
+:root{
+  --bg:#F1F3F5; --surface:#FFFFFF; --sunk:#F6F7F9; --ink:#141A21; --muted:#5B6672; --faint:#8B95A0; --line:#DAE0E6;
+  --accent:#1E4E79; --accent-soft:#E3ECF5;
+  --s-std:#2a78d6; --s-sun:#eb6834; --amb:#8B95A0;
+  --bad:#B23A2E; --bad-soft:#F8E3E0;
+  --f-display:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1317; --surface:#171D23; --sunk:#12171C; --ink:#E6EBF0; --muted:#9AA6B2; --faint:#6D7884; --line:#28313A;
+  --accent:#8DB8E3; --accent-soft:#1B2A3A; --s-std:#3987e5; --s-sun:#d95926; --amb:#6D7884; --bad:#E58378; --bad-soft:#3A1E1B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1317; --surface:#171D23; --sunk:#12171C; --ink:#E6EBF0; --muted:#9AA6B2; --faint:#6D7884; --line:#28313A;
+  --accent:#8DB8E3; --accent-soft:#1B2A3A; --s-std:#3987e5; --s-sun:#d95926; --amb:#6D7884; --bad:#E58378; --bad-soft:#3A1E1B; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+.wrap{max-width:1160px;margin:0 auto;padding-block:22px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.3;text-wrap:balance}
+h1{font-size:1.75rem;font-weight:700}
+h2{font-size:1.1rem;font-weight:600}
+h3{font-size:.95rem;font-weight:600}
+p{margin:0}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+.en{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);direction:ltr;unicode-bidi:isolate;display:block;text-align:right}
+.muted{color:var(--muted)} .small{font-size:.84rem}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{display:flex;flex-direction:column;gap:4px;margin-bottom:16px}
+.eyebrow{font-size:.78rem;font-weight:600;color:var(--accent);letter-spacing:.04em}
+.explain{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px 22px;margin-bottom:18px}
+.explain div{display:flex;flex-direction:column;gap:4px}
+.explain .k{font-size:.78rem;font-weight:600;color:var(--accent)}
+
+.bench{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.bench{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+legend{font-family:var(--f-display);font-weight:600;font-size:.92rem;margin-bottom:6px;padding:0}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.82rem;color:var(--muted);font-weight:500;display:flex;justify-content:space-between;gap:8px}
+.field label output{font-family:var(--f-mono);color:var(--ink);direction:ltr}
+select,input[type=number]{font:inherit;color:inherit;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:100%}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+hr{border:0;border-top:1px solid var(--line);margin:0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.seg button{font:inherit;font-size:.8rem;padding:6px 4px;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:6px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+
+.verdict{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.verdict .big{font-family:var(--f-display);font-size:1.3rem;font-weight:600}
+.verdict .big .num{color:var(--s-sun)}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.res{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.res h3{font-size:.86rem;color:var(--muted);font-weight:500;font-family:var(--f-body)}
+.pair{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline}
+.pair .lab{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.pair .val{font-family:var(--f-mono);font-size:1.15rem;font-weight:600;direction:ltr;text-align:right;font-variant-numeric:tabular-nums}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block;flex:none}
+.delta{font-size:.82rem;font-weight:600}
+.delta.bad{color:var(--bad)}
+
+.chartbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;position:relative}
+.chart-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:center;margin-bottom:6px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid}
+.svgwrap{overflow-x:auto}
+svg.chart{display:block;width:100%;min-width:520px;height:auto;direction:ltr}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.8rem;box-shadow:0 4px 16px color-mix(in srgb,var(--ink) 14%,transparent);min-width:180px;z-index:5}
+.tip .r{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.tip .r span:first-child{display:inline-flex;gap:6px;align-items:center;color:var(--muted)}
+.linkbtn{background:none;border:0;color:var(--accent);font:inherit;font-size:.84rem;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
+.tablebox{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:.82rem}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{color:var(--muted);font-weight:600;background:var(--sunk)}
+td.num{text-align:left}
+
+.method{margin-top:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.method section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.method ul{margin:0;padding-inline-start:18px;display:flex;flex-direction:column;gap:6px}
+.formula{font-family:var(--f-mono);font-size:.8rem;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:10px 12px;direction:ltr;text-align:left;overflow-x:auto;white-space:pre;line-height:1.7}
+.field-sec{margin-top:22px;display:flex;flex-direction:column;gap:12px}
+.fs-head{display:flex;flex-direction:column;gap:4px;max-width:72ch}
+.fs-grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.fs-grid{grid-template-columns:1fr}}
+textarea{font-family:var(--f-mono);font-size:.82rem;color:inherit;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;resize:vertical;line-height:1.6}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-size:.88rem;font-weight:500;padding:7px 16px;border-radius:6px;border:1px solid var(--line);background:var(--sunk);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:hover{border-color:var(--accent)}
+.empty{padding:40px 16px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+#fMsg.err{color:var(--bad)}
+.exnote{display:inline-block;font-size:.76rem;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 10px;margin-bottom:8px}
+.fit{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;margin-top:12px}
+.fit .kv{display:flex;flex-direction:column}
+.fit .kv span:first-child{font-size:.78rem;color:var(--muted)}
+.fit .kv span:last-child{font-family:var(--f-mono);font-weight:600;direction:ltr;text-align:right}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap" dir="rtl" lang="ar">
+  <header>
+    <span class="eyebrow">نموذج أولي · الإصدار 0.2 · هاني المطوع</span>
+    <h1>المحول تحت الشمس</h1>
+    <p class="muted">كم تخطئ الحسابات المعتادة في حرارة المحول عندما يقف تحت شمس الجزيرة العربية؟</p>
+  </header>
+
+  <section class="explain" aria-label="ماذا تفعل الحاسبة">
+    <div><span class="k">المشكلة</span><p>الطريقة المعتادة تحسب حرارة المحول من حرارة الجو والحمل فقط، ولا تحسب حرارة الشمس الساقطة على الخزان.</p></div>
+    <div><span class="k">ماذا تحسب الحاسبة</span><p>حرارة أسخن نقطة في الملفات خلال يوم كامل، مرة بالطريقة المعتادة ومرة مع حساب الشمس والرياح، على طقس حقيقي من عنيزة ونيوم. ثم تقارن الطريقتين بقراءات حقيقية من محولك.</p></div>
+    <div><span class="k">لماذا يهم</span><p>كل زيادة في الحرارة تسرّع تآكل العزل. فإذا كانت الحسابات أقل من الواقع، يقصر عمر المحول دون أن ننتبه.</p></div>
+  </section>
+
+  <div class="bench">
+    <form class="panel" id="inputs" aria-label="المدخلات" onsubmit="return false">
+      <fieldset>
+        <legend>الموقع واليوم</legend>
+        <div class="field"><label for="site">الموقع</label>
+          <select id="site"><option value="unaizah">عنيزة، القصيم</option><option value="neom">نيوم، ساحل البحر الأحمر</option></select></div>
+        <div class="field"><label for="day">اليوم</label>
+          <select id="day"><option value="avg">يوم يوليو المعتاد (متوسط الشهر)</option><option value="hot">أحرّ يوم في يوليو</option></select></div>
+        <p class="small muted" id="wxNote"></p>
+      </fieldset>
+      <hr>
+      <fieldset>
+        <legend>الحمل</legend>
+        <div class="field"><label>شكل الحمل خلال اليوم</label>
+          <div class="seg" id="profileSeg" role="group" aria-label="شكل الحمل">
+            <button type="button" data-p="ac" aria-pressed="true">صيفي مع التكييف</button>
+            <button type="button" data-p="flat" aria-pressed="false">ثابت</button>
+            <button type="button" data-p="night" aria-pressed="false">ذروة ليلية</button>
+          </div></div>
+        <div class="field"><label for="peak">حمل الذروة من القدرة المقننة <output id="peakOut" for="peak"></output></label>
+          <input type="range" id="peak" min="50" max="130" step="5" value="100"></div>
+      </fieldset>
+      <hr>
+      <fieldset>
+        <legend>المحول</legend>
+        <div class="row2">
+          <div class="field"><label for="pnl">فقد اللاحمل kW</label><input type="number" id="pnl" value="2.0" step="0.1" min="0.1" dir="ltr"></div>
+          <div class="field"><label for="pll">فقد الحمل kW</label><input type="number" id="pll" value="13.5" step="0.5" min="0.5" dir="ltr"></div>
+        </div>
+        <div class="field"><label for="cool">التبريد</label>
+          <select id="cool"><option value="ONAN">طبيعي بالزيت والهواء</option><option value="ONAF">زيت طبيعي مع مراوح</option></select></div>
+        <div class="field"><label for="dtor">ارتفاع حرارة الزيت المقنن K</label><input type="number" id="dtor" value="55" step="1" min="20" max="80" dir="ltr"></div>
+        <p class="small muted">القيم الافتراضية لمحول توزيع 1500 kVA بارتفاع حرارة 65 K. القيم الدقيقة موجودة في شهادة اختبار المصنع.</p>
+      </fieldset>
+      <hr>
+      <fieldset>
+        <legend>الشمس على الخزان</legend>
+        <div class="field"><label>لون الطلاء</label>
+          <div class="seg" id="paintSeg" role="group" aria-label="لون الطلاء">
+            <button type="button" data-a="0.25" aria-pressed="false">أبيض</button>
+            <button type="button" data-a="0.55" aria-pressed="true">رمادي فاتح</button>
+            <button type="button" data-a="0.85" aria-pressed="false">رمادي غامق</button>
+          </div></div>
+        <div class="field"><label for="area">المساحة المعرّضة للشمس <output id="areaOut" for="area"></output></label>
+          <input type="range" id="area" min="1" max="15" step="0.5" value="6"></div>
+        <p class="small muted">المساحة التي تستقبل الشمس فعليًا من الغطاء والجوانب والمشعات.</p>
+      </fieldset>
+      <hr>
+      <fieldset>
+        <legend>الرياح</legend>
+        <div class="field"><label for="kw">تعرّض المشعات للرياح <output id="kwOut" for="kw"></output></label>
+          <input type="range" id="kw" min="0" max="1" step="0.1" value="0.1"></div>
+        <p class="small muted">صفر يعني محولًا محاطًا بجدران لا يصله الهواء، وواحد يعني محولًا مكشوفًا في أرض مفتوحة. سرعة الرياح من بيانات الطقس نفسها.</p>
+      </fieldset>
+    </form>
+
+    <div>
+      <section class="verdict" aria-live="polite">
+        <span class="small muted" id="vSub"></span>
+        <p class="big" id="vBig"></p>
+        <p class="small muted" id="vNote"></p>
+      </section>
+
+      <section class="results" aria-label="النتائج">
+        <div class="res"><h3>أعلى حرارة لأسخن نقطة</h3><div class="pair" id="rHS"></div></div>
+        <div class="res"><h3>ساعات من عمر العزل تُستهلك في اليوم</h3><div class="pair" id="rAge"></div></div>
+        <div class="res"><h3>أقصى حمل ذروة بعمر طبيعي</h3><div class="pair" id="rPeak"></div></div>
+      </section>
+
+      <section class="chartbox">
+        <div class="chart-head">
+          <h2>حرارة أسخن نقطة على مدار اليوم <span class="small muted num">°C</span></h2>
+          <div class="legend">
+            <span><i style="border-color:var(--s-sun)"></i>مع المناخ: الشمس والرياح</span>
+            <span><i style="border-color:var(--s-std)"></i>الطريقة المعتادة</span>
+            <span><i style="border-color:var(--amb);border-top-style:dashed"></i>حرارة الجو</span>
+          </div>
+        </div>
+        <div class="svgwrap"><svg class="chart" id="chart" viewBox="0 0 760 320" role="img" aria-label="رسم حرارة أسخن نقطة خلال 24 ساعة"></svg></div>
+        <div class="tip" id="tip" hidden></div>
+        <button class="linkbtn" id="tblBtn" type="button" aria-expanded="false">عرض القيم ساعة بساعة</button>
+        <div class="tablebox" id="tbl" hidden></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="field-sec" aria-label="المقارنة بقراءات حقيقية">
+    <div class="fs-head">
+      <h2>قارن بقراءات حقيقية من محولك</h2>
+      <p class="muted small">هذا القسم يجيب عن السؤال الأهم: أيّ الطريقتين أقرب لما يحدث فعلًا في الموقع؟ ألصق قراءات يوم واحد، وتحسب الحاسبة حرارة الزيت بالطريقتين وتقارنها بقراءاتك.</p>
+    </div>
+    <div class="fs-grid">
+      <div class="panel">
+        <div class="field">
+          <label for="fdata">القراءات: سطر لكل قراءة</label>
+          <textarea id="fdata" dir="ltr" rows="10" spellcheck="false" placeholder="14:00, 44.6, 92, 88.5, 985, 3.7"></textarea>
+        </div>
+        <p class="small muted">ترتيب القيم في كل سطر:</p>
+        <span class="en">time, ambient °C, load %, top-oil °C, irradiance W/m² (optional), wind km/h (optional)</span>
+        <p class="small muted">حرارة الزيت العلوي تُقرأ من مؤشر حرارة الزيت على المحول أو من نظام المراقبة. إذا لم تتوفر قيم الإشعاع أو الرياح، تأخذها الحاسبة من بيانات الموقع المختار في الأعلى.</p>
+        <div class="btns">
+          <button type="button" class="btn primary" id="fRun">قارن</button>
+          <button type="button" class="btn" id="fSample">حمّل مثالًا</button>
+        </div>
+        <p class="small" id="fMsg" role="status"></p>
+      </div>
+      <div id="fOut">
+        <div class="chartbox"><div class="empty">
+          <h3>لا توجد قراءات بعد</h3>
+          <p class="muted small">ألصق قراءات محولك واضغط «قارن»، أو اضغط «حمّل مثالًا» لترى كيف تعمل المقارنة.</p>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="method">
+    <section>
+      <h2>كيف تحسب</h2>
+      <ul class="small">
+        <li>نموذج الحرارة المعتمد في دليل تحميل المحولات الزيتية، بثوابت زمنية لزيت المحول والملفات.</li>
+        <li>حرارة الشمس الممتصة تُضاف كفقد إضافي داخل المحول: معامل امتصاص الطلاء × شدة الإشعاع × المساحة المعرّضة.</li>
+        <li>عمر العزل يُحسب لورق معالج حراريًا: عند 110 °C يستهلك المحول ساعة من عمره في كل ساعة، وكل 6 إلى 7 درجات زيادة تضاعف التآكل تقريبًا.</li>
+        <li>الرياح تزيد تبريد المشعات من الخارج، فتُخفّض ارتفاع حرارة الزيت. يُفترض أن نصف مقاومة انتقال الحرارة خارج الخزان ويتأثر بالرياح، والنصف الآخر داخله ولا يتأثر.</li>
+        <li>«أقصى حمل ذروة» هو أعلى حمل يبقي استهلاك العمر 24 ساعة في اليوم، أي عمرًا طبيعيًا.</li>
+        <li>في المقارنة بقراءاتك، تجرّب الحاسبة كل القيم الممكنة للمساحة المعرّضة للشمس ودرجة التعرّض للرياح، وتختار الأقرب لقراءاتك.</li>
+      </ul>
+      <span class="en">IEEE C57.91 — Clause 7 thermal model, F<sub>AA</sub> aging factor</span>
+      <div class="formula">Δθ_TO,U = Δθ_TO,R · [ (K²R + 1)/(R + 1) + α·G·A / P_tot ]^n
+Δθ_H,U  = Δθ_H,R · K^(2m)
+wind:     Δθ_TO,U × [ 0.5 + 0.5 · h₀ / (h₀ + 3.8·k·v) ],  h₀ = 10.7 W/m²K
+θ_H     = θ_A + Δθ_TO + Δθ_H
+F_AA    = exp( 15000/383 − 15000/(θ_H + 273) )</div>
+    </section>
+    <section>
+      <h2>حدود هذه النسخة</h2>
+      <ul class="small">
+        <li>أثر الرياح محسوب بطريقة مبسّطة، ودرجة تعرّض المشعات للرياح تقدير تحتاج معايرته بقراءات حقيقية. قسم المقارنة يقدّرها لك من قراءاتك.</li>
+        <li>سرعة الرياح من بيانات الطقس مقاسة على ارتفاع 10 m، والهواء حول المحول عادة أبطأ منها.</li>
+        <li>الإشعاع المستخدم هو الإشعاع على سطح أفقي، والجوانب الرأسية تستقبل أقل منه في الظهيرة.</li>
+        <li>المساحة المعرّضة ومعامل الامتصاص قيم تقريبية. النتائج تحتاج مقارنة بقياسات محول حقيقي في الموقع قبل الاعتماد عليها.</li>
+        <li>هذه أداة بحث وتقدير، وليست بديلًا عن دراسة تحميل معتمدة أو بيانات المصنّع.</li>
+      </ul>
+      <h3 style="margin-top:6px">مصدر الطقس</h3>
+      <p class="small muted">بيانات ساعية لشهر يوليو 2026 من أرشيف إعادة التحليل.</p>
+      <span class="en">Open-Meteo Historical Weather API (ERA5-based), July 2026</span>
+      <h3 style="margin-top:6px">مرتبطة بالورقة</h3>
+      <span class="en">AJSE-D-26-14075 — Section 4.7</span>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+const WX={"unaizah":{"hot_date":"2026-07-19","hot":{"T":[35.8,34.7,34.1,33.6,33.3,32.6,31.7,34.0,36.0,38.4,41.0,42.7,43.9,44.6,45.3,45.0,44.8,44.2,43.2,41.8,40.6,39.4,38.4,36.4],"G":[0,0,0,0,0,0,12,84,235,476,709,892,973,985,927,806,607,389,155,26,0,0,0,0]},"avg":{"T":[33.8,32.6,31.7,31.4,30.6,29.7,29.5,31.0,33.5,36.2,38.4,40.0,41.2,42.0,42.6,42.6,42.5,42.0,41.2,39.3,38.0,37.1,35.9,34.9],"G":[0,0,0,0,0,0,15,142,346,560,748,892,977,990,932,809,631,419,201,39,0,0,0,0]}},"neom":{"hot_date":"2026-07-21","hot":{"T":[31.7,30.9,30.3,30.8,30.9,29.9,28.6,30.0,33.8,35.9,37.6,39.0,39.8,40.1,40.1,39.6,38.0,36.5,34.5,33.9,32.9,33.4,32.4,31.4],"G":[0,0,0,0,0,0,0,60,244,461,664,830,945,996,980,899,757,570,354,144,13,0,0,0]},"avg":{"T":[30.8,30.1,29.5,29.3,28.8,28.5,28.1,29.7,32.5,34.4,35.8,36.7,37.1,37.3,37.5,37.3,36.5,35.5,34.4,33.5,33.1,33.0,32.3,31.5],"G":[0,0,0,0,0,0,0,65,248,464,665,829,941,991,977,896,756,570,356,146,14,0,0,0]}}};
+const WIND={"unaizah":{"hot":[10.5,13.3,15.2,12.4,12.1,10.6,16.9,9.9,5.7,6.8,10.0,6.5,0.9,3.7,7.3,7.2,10.1,15.5,19.7,17.4,13.0,14.5,11.0,5.0],"avg":[10.2,8.4,7.6,7.8,6.8,5.7,6.5,7.9,6.6,7.2,8.3,9.0,9.3,10.2,11.4,12.9,14.0,14.9,15.3,11.5,10.9,11.6,11.4,11.4]},"neom":{"hot":[14.3,10.8,7.6,8.3,6.8,9.9,11.4,10.1,4.3,7.6,10.7,13.1,12.4,15.2,23.8,29.3,31.6,26.8,23.3,17.6,6.4,11.7,13.3,12.6],"avg":[9.5,8.3,7.7,7.6,7.9,9.0,9.0,8.3,5.7,6.2,9.7,14.1,17.5,19.5,20.2,21.5,20.8,18.0,14.0,10.3,8.3,7.9,8.7,9.9]}};
+const PROFILES={
+  ac:[.62,.58,.55,.53,.52,.53,.57,.63,.70,.77,.84,.90,.95,.98,1,1,.99,.96,.92,.88,.83,.77,.71,.66],
+  flat:Array(24).fill(1),
+  night:[.95,.9,.85,.8,.75,.7,.65,.6,.6,.62,.65,.68,.7,.72,.74,.76,.8,.85,.9,.95,1,1,1,.98]};
+const COOL={ONAN:{n:0.8,m:0.8,tauTO:180,tauW:7},ONAF:{n:0.9,m:0.8,tauTO:150,tauW:7}};
+const SITE={unaizah:'عنيزة',neom:'نيوم'};
+const st={site:'unaizah',day:'avg',profile:'ac',peak:1.0,alpha:0.55,area:6,pnl:2.0,pll:13.5,cool:'ONAN',kw:0.1,dtor:55};
+const $=s=>document.querySelector(s);
+const f1=x=>x.toFixed(1), f0=x=>Math.round(x).toString();
+
+function simulate(o){
+  const R=o.PLL/o.PNL,Ptot=o.PNL+o.PLL,N=1440;
+  const lerp=(a,t)=>{const h=Math.floor(t/60)%24,f=(t%60)/60;return a[h]+(a[(h+1)%24]-a[h])*f};
+  let to=o.dTOR*0.7,h=o.dHR*0.7;const pts=[];
+  for(let d=0;d<4;d++)for(let t=0;t<N;t++){
+    const K=lerp(o.load,t),A=lerp(o.T,t),G=Math.max(0,lerp(o.G,t));
+    const q=o.solar?o.alpha*G*o.area/1000/Ptot:0;
+    const v=o.solar&&o.W?Math.max(0,lerp(o.W,t))/3.6:0,fw=0.5+0.5*10.7/(10.7+3.8*(o.kw||0)*v);
+    const toU=o.dTOR*Math.pow((K*K*R+1)/(R+1)+q,o.n)*fw,hU=o.dHR*Math.pow(K,2*o.m);
+    to+=(toU-to)/o.tauTO;h+=(hU-h)/o.tauW;
+    if(d===3)pts.push({t,A,K,G,hs:A+to+h,top:A+to});
+  }
+  let s=0,mx=-1e9,mi=0;pts.forEach((p,i)=>{s+=Math.exp(15000/383-15000/(p.hs+273));if(p.hs>mx){mx=p.hs;mi=i}});
+  return{pts,FEQA:s/pts.length,maxHS:mx,maxAt:pts[mi].t};
+}
+function peakFor(o,prof){let lo=0.2,hi=2.5;for(let i=0;i<26;i++){const k=(lo+hi)/2;if(simulate({...o,load:prof.map(x=>x*k)}).FEQA>1)hi=k;else lo=k}return(lo+hi)/2}
+
+function base(){const w=WX[st.site][st.day];return{T:w.T,G:w.G,W:WIND[st.site][st.day],PNL:st.pnl,PLL:st.pll,dTOR:st.dtor,dHR:25,...COOL[st.cool],alpha:st.alpha,area:st.area,kw:st.kw}}
+let last=null;
+function run(){
+  $('#peakOut').textContent=Math.round(st.peak*100)+'%';
+  $('#areaOut').textContent=st.area+' m²';
+  $('#kwOut').textContent=st.kw.toFixed(1);
+  const w=WX[st.site];
+  $('#wxNote').innerHTML=st.day==='hot'?`أحرّ يوم: <span class="num">${w.hot_date}</span>، أعلى حرارة للجو <span class="num">${f1(Math.max(...w.hot.T))} °C</span>`:`أعلى حرارة للجو في المتوسط <span class="num">${f1(Math.max(...w.avg.T))} °C</span>، وأعلى إشعاع <span class="num">${f0(Math.max(...w.avg.G))} W/m²</span>`;
+  const o=base(),prof=PROFILES[st.profile],load=prof.map(x=>x*st.peak);
+  const a=simulate({...o,load,solar:false}),b=simulate({...o,load,solar:true});
+  const pa=peakFor({...o,solar:false},prof),pb=peakFor({...o,solar:true},prof);
+  last={a,b};
+  const dHS=b.maxHS-a.maxHS,ratio=b.FEQA/a.FEQA,der=(1-pb/pa)*100;
+  $('#vSub').textContent=`${SITE[st.site]} · ${st.day==='hot'?'أحرّ يوم في يوليو':'يوم يوليو المعتاد'} · حمل الذروة ${Math.round(st.peak*100)}%`;
+  $('#vBig').innerHTML=`الطريقة المعتادة تقلّل حرارة أسخن نقطة بمقدار <span class="num">${f1(dHS)} K</span>، والعزل يتآكل فعليًا أسرع بـ <span class="num">${ratio.toFixed(1)}×</span> مما تتوقعه.`;
+  $('#vNote').textContent=der>0.5?`ولتحافظ على عمر طبيعي للمحول، يجب خفض حمل الذروة بنحو ${f1(der)}% عما تسمح به الطريقة المعتادة.`:'الفرق في الحمل المسموح صغير في هذه الظروف.';
+  const row=(lab,cls,val,unit)=>`<span class="lab"><span class="sw" style="background:var(${cls})"></span>${lab}</span><span class="val">${val}${unit?' <span class="small muted">'+unit+'</span>':''}</span>`;
+  $('#rHS').innerHTML=row('المعتادة','--s-std',f1(a.maxHS),'°C')+row('مع المناخ','--s-sun',f1(b.maxHS),'°C')+`<span></span><span class="delta ${dHS>0?'bad':''}" style="text-align:right">+<span class="num">${f1(dHS)} K</span></span>`;
+  $('#rAge').innerHTML=row('المعتادة','--s-std',f1(a.FEQA*24),'h')+row('مع المناخ','--s-sun',f1(b.FEQA*24),'h')+`<span></span><span class="delta small muted" style="text-align:right">العمر الطبيعي <span class="num">24 h</span></span>`;
+  $('#rPeak').innerHTML=row('المعتادة','--s-std',Math.round(pa*100)+'%','')+row('مع المناخ','--s-sun',Math.round(pb*100)+'%','')+`<span></span><span class="delta ${der>0.5?'bad':''}" style="text-align:right">تخفيض <span class="num">${f1(Math.max(0,der))}%</span></span>`;
+  drawChart(a,b);
+  if(!$('#tbl').hidden)drawTable();
+}
+
+const W=760,H=320,M={l:44,r:110,t:14,b:34};
+let sc=null;
+function drawChart(a,b){
+  const all=[...a.pts.map(p=>p.A),...b.pts.map(p=>p.hs),a.maxHS,110];
+  const lo=Math.floor((Math.min(...all)-3)/10)*10,hi=Math.ceil((Math.max(...all)+3)/10)*10;
+  const x=t=>M.l+(t/1440)*(W-M.l-M.r),y=v=>M.t+(hi-v)/(hi-lo)*(H-M.t-M.b);
+  sc={x,y,lo,hi};
+  const path=(pts,f)=>pts.filter((p,i)=>i%5===0||i===pts.length-1).map((p,i)=>(i?'L':'M')+x(p.t).toFixed(1)+' '+y(f(p)).toFixed(1)).join('');
+  let g='';
+  for(let v=lo;v<=hi;v+=10)g+=`<line x1="${M.l}" x2="${W-M.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${M.l-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${v}</text>`;
+  for(let h=0;h<=24;h+=3)g+=`<text x="${x(h*60)}" y="${H-M.b+18}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${String(h%24).padStart(2,'0')}:00</text>`;
+  const y110=y(110);
+  g+=`<line x1="${M.l}" x2="${W-M.r}" y1="${y110}" y2="${y110}" stroke="var(--faint)" stroke-width="1" stroke-dasharray="2 4"/><text x="${W-M.r+6}" y="${y110+4}" font-size="10.5" fill="var(--muted)" font-family="IBM Plex Sans Arabic,sans-serif" direction="rtl" text-anchor="end">110 °C مرجع العمر</text>`;
+  g+=`<path d="${path(a.pts,p=>p.A)}" fill="none" stroke="var(--amb)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  g+=`<path d="${path(a.pts,p=>p.hs)}" fill="none" stroke="var(--s-std)" stroke-width="2" stroke-linejoin="round"/>`;
+  g+=`<path d="${path(b.pts,p=>p.hs)}" fill="none" stroke="var(--s-sun)" stroke-width="2" stroke-linejoin="round"/>`;
+  // peak markers
+  const mk=(r,col)=>`<circle cx="${x(r.maxAt)}" cy="${y(r.maxHS)}" r="4.5" fill="${col}" stroke="var(--surface)" stroke-width="2"/>`;
+  g+=mk(a,'var(--s-std)')+mk(b,'var(--s-sun)');
+  // direct end labels, avoid collision
+  const end=r=>r.pts[r.pts.length-1];
+  let ys=[y(end(b).hs),y(end(a).hs),y(end(a).A)];
+  for(let i=1;i<3;i++)if(ys[i]-ys[i-1]<14)ys[i]=ys[i-1]+14;
+  const lab=(yy,txt,col)=>`<text x="${W-M.r+6}" y="${yy+4}" font-size="11" fill="var(--ink)" font-family="IBM Plex Sans Arabic,sans-serif" direction="rtl" text-anchor="end"><tspan fill="${col}">●</tspan> ${txt}</text>`;
+  g+=lab(ys[0],'مع المناخ','var(--s-sun)')+lab(ys[1],'المعتادة','var(--s-std)')+lab(ys[2],'الجو','var(--amb)');
+  g+=`<line id="xh" x1="0" x2="0" y1="${M.t}" y2="${H-M.b}" stroke="var(--faint)" stroke-width="1" visibility="hidden"/>`;
+  g+=`<g id="dots" visibility="hidden"><circle id="d1" r="4" fill="var(--s-sun)" stroke="var(--surface)" stroke-width="2"/><circle id="d2" r="4" fill="var(--s-std)" stroke="var(--surface)" stroke-width="2"/></g>`;
+  g+=`<rect id="hit" x="${M.l}" y="${M.t}" width="${W-M.l-M.r}" height="${H-M.t-M.b}" fill="transparent"/>`;
+  $('#chart').innerHTML=g;
+  const svg=$('#chart'),tip=$('#tip'),box=$('.chartbox');
+  const move=ev=>{
+    const pt=svg.createSVGPoint();const e=ev.touches?ev.touches[0]:ev;pt.x=e.clientX;pt.y=e.clientY;
+    const p=pt.matrixTransform(svg.getScreenCTM().inverse());
+    let t=Math.round((p.x-M.l)/(W-M.l-M.r)*1440/10)*10;t=Math.max(0,Math.min(1439,t));
+    const A=last.a.pts[t],B=last.b.pts[t];
+    $('#xh').setAttribute('x1',x(t));$('#xh').setAttribute('x2',x(t));$('#xh').setAttribute('visibility','visible');
+    $('#d1').setAttribute('cx',x(t));$('#d1').setAttribute('cy',y(B.hs));$('#d2').setAttribute('cx',x(t));$('#d2').setAttribute('cy',y(A.hs));$('#dots').setAttribute('visibility','visible');
+    const hh=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+    tip.innerHTML=`<div class="num" style="font-weight:600;margin-bottom:4px">${hh}</div>
+      <div class="r"><span><span class="sw" style="background:var(--s-sun)"></span>مع المناخ</span><span class="num">${f1(B.hs)} °C</span></div>
+      <div class="r"><span><span class="sw" style="background:var(--s-std)"></span>المعتادة</span><span class="num">${f1(A.hs)} °C</span></div>
+      <div class="r"><span>حرارة الجو</span><span class="num">${f1(A.A)} °C</span></div>
+      <div class="r"><span>الإشعاع</span><span class="num">${f0(A.G)} W/m²</span></div>
+      <div class="r"><span>الحمل</span><span class="num">${Math.round(A.K*100)}%</span></div>`;
+    tip.hidden=false;
+    const br=box.getBoundingClientRect(),sr=svg.getBoundingClientRect();
+    const px=sr.left-br.left+(x(t)/W)*sr.width;let left=px+14;if(left+200>br.width)left=px-214;
+    tip.style.left=Math.max(4,left)+'px';tip.style.top=(sr.top-br.top+20)+'px';
+  };
+  const hit=$('#hit');
+  hit.addEventListener('mousemove',move);hit.addEventListener('touchstart',move,{passive:true});hit.addEventListener('touchmove',move,{passive:true});
+  hit.addEventListener('mouseleave',()=>{tip.hidden=true;$('#xh').setAttribute('visibility','hidden');$('#dots').setAttribute('visibility','hidden')});
+}
+function drawTable(){
+  const {a,b}=last;let r='';
+  for(let h=0;h<24;h++){const A=a.pts[h*60],B=b.pts[h*60];r+=`<tr><td class="num">${String(h).padStart(2,'0')}:00</td><td class="num">${f1(A.A)}</td><td class="num">${f0(A.G)}</td><td class="num">${Math.round(A.K*100)}%</td><td class="num">${f1(A.hs)}</td><td class="num">${f1(B.hs)}</td><td class="num">${f1(B.hs-A.hs)}</td></tr>`}
+  $('#tbl').innerHTML=`<table><thead><tr><th>الساعة</th><th>الجو °C</th><th>الإشعاع W/m²</th><th>الحمل</th><th>المعتادة °C</th><th>مع الشمس °C</th><th>الفرق K</th></tr></thead><tbody>${r}</tbody></table>`;
+}
+
+/* ---------- field comparison ---------- */
+let fExample=false,fFit=null;
+const sg=v=>{const r=Math.round(v*10)/10;return r===0?'0.0':(r>0?'+':'')+r.toFixed(1)};
+function parseRows(text){
+  const rows=[],bad=[];
+  text.split(/\r?\n/).forEach((ln,i)=>{
+    const s=ln.trim();if(!s)return;
+    const p=s.split(/[,;\t]+|\s{2,}/).map(x=>x.trim()).filter(Boolean);
+    const tm=p[0].match(/^(\d{1,2})(?::(\d{2}))?$/);
+    const nums=p.slice(1).map(Number);
+    if(!tm||nums.length<3||nums.slice(0,3).some(x=>!isFinite(x))){if(/\d/.test(s)&&i>0)bad.push(i+1);return}
+    const t=(+tm[1])*60+(+(tm[2]||0));if(t<0||t>=1440){bad.push(i+1);return}
+    rows.push({t,A:nums[0],K:nums[1]/100,top:nums[2],G:isFinite(nums[3])?nums[3]:null,W:isFinite(nums[4])?nums[4]:null});
+  });
+  rows.sort((a,b)=>a.t-b.t);
+  return{rows,bad};
+}
+function hourly(rows,key){
+  return Array.from({length:24},(_,h)=>{const t=h*60;
+    let i=rows.findIndex(r=>r.t>=t);
+    const nxt=i<0?rows[0]:rows[i],prv=i<=0?rows[rows.length-1]:rows[i-1];
+    const tn=i<0?rows[0].t+1440:nxt.t,tp=i===0?prv.t-1440:prv.t;
+    if(tn===tp)return nxt[key];const f=(t-tp)/(tn-tp);return prv[key]+(nxt[key]-prv[key])*f});
+}
+function errs(sim,rows){let s=0,mx=0,b=0;rows.forEach(r=>{const e=sim.pts[r.t].top-r.top;s+=e*e;b+=e;if(Math.abs(e)>Math.abs(mx))mx=e});return{rmse:Math.sqrt(s/rows.length),max:mx,bias:b/rows.length}}
+function runField(){
+  const msg=$('#fMsg');msg.className='small';
+  const {rows,bad}=parseRows($('#fdata').value);
+  if(rows.length<4){msg.className='small err';msg.textContent='أحتاج 4 قراءات على الأقل في يوم واحد. تأكد أن كل سطر فيه الوقت وحرارة الجو والحمل وحرارة الزيت.';return}
+  const notes=[];
+  if(bad.length)notes.push(`تجاهلت ${bad.length} سطرًا لم أفهم صيغته.`);
+  const hasG=rows.every(r=>r.G!=null),hasW=rows.every(r=>r.W!=null);
+  if(!hasG||!hasW)notes.push(`أخذت ${!hasG&&!hasW?'الإشعاع والرياح':!hasG?'الإشعاع':'الرياح'} من بيانات ${SITE[st.site]} في الأعلى.`);
+  const b0=base();
+  const o={...b0,T:hourly(rows,'A'),load:hourly(rows,'K'),G:hasG?hourly(rows,'G'):b0.G,W:hasW?hourly(rows,'W'):b0.W};
+  const std=simulate({...o,solar:false}),cur=simulate({...o,solar:true});
+  let best=null;
+  for(let ar=0;ar<=15.001;ar+=0.5)for(let k=0;k<=1.001;k+=0.1){const s=simulate({...o,solar:true,area:ar,kw:k});const e=errs(s,rows);if(!best||e.rmse<best.e.rmse)best={ar,k,e,s}}
+  const eS=errs(std,rows),eC=errs(cur,rows);
+  fFit=best;
+  msg.textContent=notes.join(' ');
+  const better=eS.rmse>0?(1-best.e.rmse/eS.rmse)*100:0;
+  const tr=(lab,col,e)=>`<tr><td><span class="sw" style="background:${col}"></span> ${lab}</td><td class="num">${f1(e.rmse)}</td><td class="num">${sg(e.max)}</td><td class="num">${sg(e.bias)}</td></tr>`;
+  $('#fOut').innerHTML=`
+   ${fExample?'<span class="exnote">مثال مصطنع لتوضيح طريقة العمل، وليس قراءات محول حقيقي</span>':''}
+   <section class="verdict">
+     <span class="small muted">${rows.length} قراءة · المقارنة على حرارة الزيت العلوي</span>
+     <p class="big">${best.e.rmse<eS.rmse?`حساب المناخ يقرّب الحاسبة من قراءاتك، ويقلّل الخطأ بنحو <span class="num">${f0(better)}%</span>.`:`الطريقة المعتادة أقرب لقراءات هذا المحول من حساب المناخ.`}</p>
+     <p class="small muted">${eS.bias<-0.5?`الطريقة المعتادة تعطي حرارة أقل من قراءاتك بمتوسط ${f1(-eS.bias)} درجة.`:eS.bias>0.5?`الطريقة المعتادة تعطي حرارة أعلى من قراءاتك بمتوسط ${f1(eS.bias)} درجة.`:'متوسط الفرق بين الطريقة المعتادة وقراءاتك صغير.'}</p>
+   </section>
+   <div class="chartbox">
+     <div class="chart-head"><h2>حرارة الزيت العلوي <span class="small muted num">°C</span></h2>
+       <div class="legend"><span><span class="sw" style="background:var(--ink);border-radius:50%"></span>قراءاتك</span><span><i style="border-color:var(--s-sun)"></i>مع المناخ بعد المعايرة</span><span><i style="border-color:var(--s-std)"></i>الطريقة المعتادة</span></div></div>
+     <div class="svgwrap"><svg class="chart" id="fchart" viewBox="0 0 760 300" role="img" aria-label="مقارنة حرارة الزيت المحسوبة بالقراءات"></svg></div>
+     <div class="tablebox"><table><thead><tr><th>الطريقة</th><th>متوسط الخطأ K</th><th>أكبر خطأ K</th><th>الانحياز K</th></tr></thead><tbody>
+       ${tr('الطريقة المعتادة','var(--s-std)',eS)}${tr('مع المناخ بإعداداتك الحالية','var(--faint)',eC)}${tr('مع المناخ بعد المعايرة','var(--s-sun)',best.e)}
+     </tbody></table></div>
+     <p class="small muted" style="margin-top:8px">متوسط الخطأ هو جذر متوسط مربعات الفروق. الانحياز السالب يعني أن الحساب أقل من القراءة.</p>
+   </div>
+   <div class="fit">
+     <div class="kv"><span>المساحة المعرّضة للشمس الأقرب لقراءاتك</span><span>${best.ar} m²</span></div>
+     <div class="kv"><span>درجة التعرّض للرياح</span><span>${best.k.toFixed(1)}</span></div>
+     <button type="button" class="btn primary" id="fApply">طبّق هذه القيم على الحاسبة</button>
+   </div>`;
+  drawField(std,best.s,rows);
+  $('#fApply').onclick=()=>{st.area=best.ar;st.kw=+best.k.toFixed(1);$('#area').value=st.area;$('#kw').value=st.kw;run();window.scrollTo({top:0,behavior:'smooth'})};
+}
+function drawField(a,b,rows){
+  const W2=760,H2=300,m={l:44,r:20,t:14,b:34};
+  const all=[...a.pts.map(p=>p.top),...b.pts.map(p=>p.top),...rows.map(r=>r.top)];
+  const lo=Math.floor((Math.min(...all)-2)/10)*10,hi=Math.ceil((Math.max(...all)+2)/10)*10;
+  const x=t=>m.l+(t/1440)*(W2-m.l-m.r),y=v=>m.t+(hi-v)/(hi-lo)*(H2-m.t-m.b);
+  const path=pts=>pts.filter((p,i)=>i%5===0||i===pts.length-1).map((p,i)=>(i?'L':'M')+x(p.t).toFixed(1)+' '+y(p.top).toFixed(1)).join('');
+  let g='';
+  for(let v=lo;v<=hi;v+=10)g+=`<line x1="${m.l}" x2="${W2-m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${m.l-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${v}</text>`;
+  for(let h=0;h<=24;h+=3)g+=`<text x="${x(h*60)}" y="${H2-m.b+18}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${String(h%24).padStart(2,'0')}:00</text>`;
+  g+=`<path d="${path(a.pts)}" fill="none" stroke="var(--s-std)" stroke-width="2"/><path d="${path(b.pts)}" fill="none" stroke="var(--s-sun)" stroke-width="2"/>`;
+  rows.forEach(r=>{g+=`<circle cx="${x(r.t)}" cy="${y(r.top)}" r="4.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"><title>${String(Math.floor(r.t/60)).padStart(2,'0')}:${String(r.t%60).padStart(2,'0')} — ${r.top} °C · المعتادة ${f1(a.pts[r.t].top)} · المناخ ${f1(b.pts[r.t].top)}</title></circle>`});
+  $('#fchart').innerHTML=g;
+}
+function sampleData(){
+  // synthetic example: Unaizah hottest day, hidden "true" area 8.5 m² and wind exposure 0.2, OTI resolution 0.5 °C
+  const w=WX.unaizah.hot,Wd=WIND.unaizah.hot,prof=PROFILES.ac.map(x=>x*0.9);
+  const truth=simulate({T:w.T,G:w.G,W:Wd,load:prof,PNL:st.pnl,PLL:st.pll,dTOR:st.dtor,dHR:25,...COOL[st.cool],alpha:st.alpha,area:8.5,kw:0.2,solar:true});
+  let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647-0.5};
+  const lines=[];
+  for(let h=0;h<24;h++){const p=truth.pts[h*60];const top=Math.round((p.top+rnd()*1.4)*2)/2;
+    lines.push(`${String(h).padStart(2,'0')}:00, ${w.T[h]}, ${Math.round(prof[h]*100)}, ${top}, ${w.G[h]}, ${Wd[h]}`)}
+  return lines.join('\n');
+}
+
+// wiring
+$('#kw').oninput=e=>{st.kw=+e.target.value;run()};
+$('#fRun').onclick=runField;
+$('#fSample').onclick=()=>{$('#fdata').value=sampleData();fExample=true;runField()};
+$('#fdata').addEventListener('input',()=>{fExample=false});
+$('#site').onchange=e=>{st.site=e.target.value;run()};
+$('#day').onchange=e=>{st.day=e.target.value;run()};
+$('#cool').onchange=e=>{st.cool=e.target.value;run()};
+$('#peak').oninput=e=>{st.peak=+e.target.value/100;run()};
+$('#area').oninput=e=>{st.area=+e.target.value;run()};
+const num=(id,k)=>$(id).addEventListener('change',e=>{const v=parseFloat(e.target.value);if(v>0){st[k]=v;run()}else e.target.value=st[k]});
+num('#pnl','pnl');num('#pll','pll');num('#dtor','dtor');
+const seg=(id,attr,k,cast)=>document.querySelectorAll(id+' button').forEach(b=>b.onclick=()=>{document.querySelectorAll(id+' button').forEach(x=>x.setAttribute('aria-pressed',x===b));st[k]=cast(b.dataset[attr]);run()});
+seg('#profileSeg','p','profile',String);seg('#paintSeg','a','alpha',Number);
+$('#tblBtn').onclick=()=>{const t=$('#tbl');t.hidden=!t.hidden;$('#tblBtn').setAttribute('aria-expanded',!t.hidden);$('#tblBtn').textContent=t.hidden?'عرض القيم ساعة بساعة':'إخفاء الجدول';if(!t.hidden)drawTable()};
+run();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Sun-Aware Transformer Thermal Calculator"
+version: "0.2.0"
+date-released: "2026-10-25"
+license: MIT
+authors:
+  - family-names: "Almutawa"
+    given-names: "Hani"
+    affiliation: "Independent Researcher, Unaizah, Al-Qassim, Saudi Arabia"
+    email: "hani194a@gmail.com"
+abstract: >-
+  A browser-based research tool comparing the IEEE C57.91 Clause 7 transformer
+  thermal model with an extended model that adds absorbed solar heat and wind
+  cooling, with calibration against measured top-oil temperatures.
+keywords:
+  - power transformer
+  - thermal model
+  - solar radiation
+  - hot-spot temperature
+  - insulation ageing
+  - hot climate
